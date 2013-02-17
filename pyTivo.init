@@ -1,0 +1,74 @@
+#! /bin/sh
+#
+# pyTivo        This starts and stops the pyTivo video server.
+#
+# chkconfig: - 99 1
+# description: This starts and stops the pyTivo video server
+#
+# processname: /opt/pyTivo/pyTivoDaemon.py
+
+#
+SCRIPT="/opt/pyTivo/pyTivoDaemon.py"
+
+# Source function library.
+. /etc/rc.d/init.d/functions
+
+# Set defaults
+EXTRAOPTS=
+
+# Check that networking is up.
+if [ "${NETWORKING}" = "no" ]
+then
+	exit 0
+fi
+
+
+start(){
+    echo -n "Starting pyTivo: "
+    $SCRIPT start
+    RETVAL=$?
+    echo
+    touch /var/lock/subsys/pyTivo
+}
+
+stop(){
+    echo -n "Stopping pyTivo: "
+	$SCRIPT stop
+    RETVAL=$?
+    echo
+    rm -f /var/lock/subsys/pyTivo
+}
+
+restart(){
+    stop
+    start
+}
+
+condrestart(){
+    [ -e /var/lock/subsys/tux ] && restart
+}
+
+
+# See how we were called.
+case "$1" in
+    start)
+	start
+	;;
+    stop)
+	stop
+	;;
+    status)
+	status /usr/sbin/tux
+	;;
+    restart|reload)
+	restart
+	;;
+    condrestart)
+	condrestart
+	;;
+    *)
+	echo "Usage: pyTivo {start|stop|status|restart|condrestart|reload}"
+	RETVAL=1
+esac
+
+exit $RETVAL

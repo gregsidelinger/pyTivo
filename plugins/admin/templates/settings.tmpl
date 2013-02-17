@@ -1,0 +1,433 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+	<title>pyTivo Web Configuration</title>
+	<script language="javascript" type="text/javascript">
+		function fillBlank(){
+			var texts=document.getElementsByTagName('input');
+			for (var i_tem = 0; i_tem < texts.length; i_tem++){
+				if (texts[i_tem].value==''){
+					texts[i_tem].value=' ';
+				}
+			}
+		}
+		function switchDiv(pass, type){ 
+			hideallids(type);
+			showDiv(pass);
+		}
+		function hideallids(type){
+			//loop through the array and hide each element by id
+			var divs = document.getElementsByTagName('div');
+			for (var i=0;i<divs.length;i++){
+				if(divs[i].id.match(type)){
+					hideDiv(divs[i].id);
+				}
+			} 
+		}
+		function hideDiv(pass) {
+			var divs = document.getElementsByTagName('div');
+			for(i=0;i<divs.length;i++){
+				if(divs[i].id.match(pass)){//if they are 'see' divs
+					if (document.getElementById){// DOM3 = IE5, NS6
+						divs[i].style.visibility="hidden";// show/hide
+					}
+					else{
+						if (document.layers){ // Netscape 4
+							document.layers[divs[i]].display = 'hidden';
+						}
+						else{ // IE 4
+							document.all.hideshow.divs[i].visibility = 'hidden';
+						}
+					}
+				}
+			}
+		}
+		function showDiv(pass) {
+			var divs = document.getElementsByTagName('div');
+			for(i=0;i<divs.length;i++){
+				if(divs[i].id == pass){
+					if (document.getElementById){
+						divs[i].style.visibility="";
+					}
+					else {
+						if (document.layers){ // Netscape 4
+							document.layers[divs[i]].display = '';
+						}
+						else{ // IE 4
+							document.all.hideshow.divs[i].visibility = '';
+						}
+					}
+				}
+			}
+		}
+		function deleteSection(id){
+			if (select_section.section.options[id].text == 'Global Server Settings'){
+				alert('Delete Error:\n\nSorry the Global Server Settings Section is required for pyTivo to run and cannot be deleted');
+				return true;
+			}
+			var name = select_section.section.options[id].text;
+			var answer = confirm("Are you sure you wish to delete the '" + name + "' Section?")
+			if (answer){
+				switchDiv('set-delete', 'set-');
+				select_section.section.options[id] = null;
+				var field = document.getElementById(name).value;
+				document.getElementById(field).value = 'Delete_Me';
+				saveNotify();
+				return true;
+			}		
+		}
+		function resetpyTivo(){
+			var answer = confirm("Are you sure you wish to reset the pyTivo Server? Any unsaved changes will be lost!")
+			if (answer){
+				window.location="/TiVoConnect?Command=Reset&Container=$quote($container)"
+			}
+		}
+		function showData(form) {
+			var section = ""
+			var setting = ""
+			re=/[\[\]<>|]/;
+			inputs = form.getElementsByTagName("input");
+			for (i = 0; i < inputs.length; i++){
+				if (inputs[i].type == 'text' && re.exec(inputs[i].value)){
+					setting = inputs[i].name;
+					break;
+				}
+			}
+			if (setting != ""){
+				var map = document.getElementById('Section_Map').value.split(']');
+				map.pop();
+				splitSetting = setting.split('.');
+				for(i=0;i<map.length;i++){
+					key = map[i].split('|');
+					//buffer += key[0] + "---" + key[1] + "===" + splitSetting[0] + "\n";
+					if (splitSetting[0] == 'Server'){
+						section = 'server';
+						break;
+					}
+					if (key[0] == splitSetting[0]){
+						section = key[1];
+						break;
+					}
+				}
+				alert("Invalid Entry:\nSorry these are not allowed \n[]<>|");
+				switchDiv('set-' + section, 'set-');
+				document.getElementById(setting).select();
+				return false;
+			}
+			fillBlank();
+			document.config.submit();
+		}
+		function saveNotify(){
+			document.getElementById('B1').style.fontWeight= 'bold';
+			document.getElementById('B2').disabled = true;
+		}
+	</script>
+</head>
+<body style="background-color: rgb(250, 250, 250);">
+
+<p align="center"><font size="6">pyTivo Web
+Configuration</font> <a href="javascript:switchDiv('help-instructions', 'help-');">help</a></p>
+<center>
+<table style="border: 1px solid rgb(220, 220, 220);background-color: rgb(255, 255, 255);text-align: left; margin-left: auto; margin-right: auto;" border="0" cellpadding="0" cellspacing="4">
+
+  <tbody>
+
+    <tr>
+
+      <td style="border-right: 1px dotted rgb(153, 153, 153); vertical-align: top;">
+      <div id="leftframe" style="position: relative; text-align: center; width: 200px;">
+      <form name="select_section">Sections
+        <select name="section" size="7">
+        <option value="set-server">Global Server Settings</option>
+#for $name, $data in $shares_data
+	<option value="set-$name">$name</option>
+#end for
+#for $name, $data in $tivos_data
+	<option value="set-$name">$name</option>
+#end for
+        </select>
+
+        <input name="B3" value="Edit Section" type="button" onclick="switchDiv(select_section.section.options[select_section.section.selectedIndex].value, 'set-');return true;"> 
+        <input name="B4" value="Delete Section" type="button" onclick="deleteSection(select_section.section.selectedIndex)">
+        <input name="B5" value="Add Section" type="button" onclick="switchDiv('set-add', 'set-');return true;"></form>
+
+      <hr>Administration
+      <form method="post">
+        <p align="center"><input name="B1" id="B1" value="Save Changes" type="button" onclick="showData(document.config);return true;">
+        <input id="B2" name="B2" value="Soft Reset pyTivo" type="button" onclick="resetpyTivo();"></p>
+
+      </form>
+
+<a href="javascript:alert('This feature is not available yet');">View Raw File</a> </div>
+
+      </td>
+
+      <td style="vertical-align: top;">
+      <div id="settings" style="width: 300px; overflow: scroll; height: 450px; position: relative;">
+      <form name="config" method="GET" action="TiVoConnect" onsubmit="fillBlank();showData(this);">
+      <input type="hidden" name="Command" value="UpdateSettings">
+      <input type="hidden" name="Container" value="$container">
+<div id="set-server" style="width: 280px; text-align: center;position: absolute; left: 0px; top: 0px; visibility: hidden;">
+	<b>Global Server Settings</b><br>
+        <hr style="width: 100%; height: 2px;"> 
+        <table align="center">
+#set $i = 0
+#for $key in $server_known
+#set $i += 1
+#if $i%2
+<tr style="background-color: rgb(250, 250, 250);">
+#else
+<tr>
+#end if
+<td>
+#if $key in $server_data
+        $key :</td><td><input size="20" id="Server.$key" name="Server.$key" value="$server_data[$key]" onChange="saveNotify();" onfocus="switchDiv('help-$key', 'help-');return true;" type="text">
+
+#else
+        $key :</td><td><input size="20" id="Server.$key" name="Server.$key" value="" onChange="saveNotify();" onfocus="switchDiv('help-$key', 'help-');return true;" type="text">
+
+#end if
+</td></tr>
+#end for
+<tr><td colspan="2" align="center" style="border-bottom: 1px solid rgb(153, 153, 153);">User Defined Settings:</td></tr>        
+#set $i = 0
+#for $key in $server_data 
+	#if not $key in $server_known
+		#set $i += 1
+		#if $i%2
+			<tr style="background-color: rgb(250, 250, 250);">
+		#else
+			<tr>
+		#end if
+		<td>         $key :</td><td>
+	        <input size="20" id="Server.$key" name="Server.$key" value="$server_data[$key]" onChange="saveNotify();" onfocus="switchDiv('help-$key', 'help-');return true;" type="text">
+		</td></tr>
+	#end if 
+#end for 
+	</table>
+	<div style="width: 280px; position: relative;">
+		<div id="add-server-button" style="width: 280px; position: absolute; position: absolute; left: 0px; top: 0px;">
+			<br>
+			<center>
+			<input type="button" value="Add Setting" onclick="switchDiv('add-server-field', 'add-server-');return true;">
+			</center>
+		</div>
+		<div id="add-server-field" style="position: absolute; position: absolute; left: 0px; top: 0px; visibility: hidden;">
+			<table style="width: 265px;">
+			<tr><td colspan="2" align="center" style="border-bottom: 1px solid rgb(153, 153, 153);">Add a Setting</td></tr>
+			<tr><td>Setting Name:</td><td>Setting Value:</td></tr>
+			<tr><td><input size="16" id="Server.new_settting" name="Server.new__setting" onChange="saveNotify();" type="text" value=""></td><td><input size="16" type="text" onChange="saveNotify();" id="Server.new_value"  name="Server.new__value" value=""></td></tr>
+			</table>
+		</div>
+	</div>
+</div>
+#set $section_count = 0
+#set $section_map = ''
+#for $name, $data in $shares_data
+	#set $section_count += 1
+	#set $section_number = 'section-' + str($section_count)
+	<input type="hidden" name="$name" id="$name" value="$section_number">
+	#set $section_map += $section_number + '|' + $name + ']'
+	<div id="set-$name" style="text-align: center;position: absolute; left: 0px; top: 0px; visibility: hidden;">
+	[<input size="20" onChange="saveNotify();" id="$section_number" name="$section_number" value="$name">]<br>
+	<hr style="width: 100%; height: 2px;"><table align="center">
+	#set $i = 0
+	#for $key in $shares_known
+		#set $i += 1
+		#if $i%2
+			<tr style="background-color: rgb(250, 250, 250);">
+		#else
+			<tr>
+		#end if
+		#if $key in $data
+			<td>$key :</td><td><input onChange="saveNotify();" size="20" id="$section_number.$key" name="$section_number.$key" value="$data[$key]" onfocus="switchDiv('help-$key', 'help-');return true;" type="text">
+			</td>
+		#else
+			<td>$key : </td><td><input onChange="saveNotify();" size="20" id="$section_number.$key" name="$section_number.$key" value="" onfocus="switchDiv('help-$key', 'help-');return true;" type="text">
+			</td>
+		#end if
+		</tr>
+	#end for
+
+	<tr><td colspan="2" align="center" style="border-bottom: 1px solid rgb(153, 153, 153);">User Defined Settings:</td></tr> 
+	#set $i = 0
+	#for $key in $data 
+		#if not $key in $shares_known
+			#set $i += 1
+			#if $i%2
+				<tr style="background-color: rgb(250, 250, 250);">
+			#else
+				<tr>
+			#end if
+			<td> $key : </td><td>
+			<input size="20" onChange="saveNotify();" id="$section_number.$key" name="$section_number.$key" value="$data[$key]" onfocus="switchDiv('help-$key', 'help-');return true;" type="text">
+			</td></tr>
+		#end if 
+	#end for
+	</table>
+		<div style="position: relative;">
+			<div id="add-$name-button" style="width: 280px; position: absolute; position: absolute; left: 0px; top: 0px;">
+				<br>
+				<center>
+				<input type="button" value="Add Setting" onclick="switchDiv('add-$name-field', 'add-$name-');return true;">
+				</center>
+			</div>
+			<div id="add-$name-field" style="position: absolute; position: absolute; left: 0px; top: 0px; visibility: hidden;">
+				<table style="width: 265px;">
+				<tr><td colspan="2" align="center" style="border-bottom: 1px solid rgb(153, 153, 153);">Add a Setting</td></tr>
+				<tr><td>Setting Name:</td><td>Setting Value:</td></tr>
+				<tr><td><input onChange="saveNotify();" size="16" id="$(section_number).new__setting" name="$(section_number).new__setting" type="text" value=""></td><td><input onChange="saveNotify();" size="16" type="text" id="$(section_number).new__value" name="$(section_number).new__value" value=""></td></tr>
+				</table>
+			</div>
+		</div>
+	</div>
+#end for
+
+#for $name, $data in $tivos_data
+	#set $section_count += 1
+	#set $section_number = 'section-' + str($section_count)
+	<input type="hidden" name="$name" id="$name" value="$section_number">
+	#set $section_map += $section_number + '|' + $name + ']'
+	<div id="set-$name" style="text-align: center;position: absolute; left: 0px; top: 0px; visibility: hidden;">
+	[<input size="20" onChange="saveNotify();" id="$section_number" name="$section_number" value="$name">]<br>
+	<hr style="width: 100%; height: 2px;"><table align="center">
+	#set $i = 0
+	#for $key in $tivos_known
+		#set $i += 1
+		#if $i%2
+			<tr style="background-color: rgb(250, 250, 250);">
+		#else
+			<tr>
+		#end if
+		#if $key in $data
+			<td>$key :</td><td><input onChange="saveNotify();" size="20" id="$section_number.$key" name="$section_number.$key" value="$data[$key]" onfocus="switchDiv('help-$key', 'help-');return true;" type="text">
+			</td>
+		#else
+			<td>$key :</td><td><input onChange="saveNotify();" size="20" id="$section_number.$key" name="$section_number.$key" value="" onfocus="switchDiv('help-$key', 'help-');return true;" type="text">
+			</td>
+		#end if
+		</tr>
+	#end for
+
+	<tr><td colspan="2" align="center" style="border-bottom: 1px solid rgb(153, 153, 153);">User Defined Settings:</td></tr> 
+	#set $i = 0
+	#for $key in $data 
+		#if not $key in $tivos_known
+			#set $i += 1
+			#if $i%2
+				<tr style="background-color: rgb(250, 250, 250);">
+			#else
+				<tr>
+			#end if
+			<td> $key :</td><td> 
+			<input size="20" onChange="saveNotify();" id="$section_number.$key" name="$section_number.$key" value="$data[$key]" onfocus="switchDiv('help-$key', 'help-');return true;" type="text">
+			</td></tr>
+		#end if 
+	#end for
+	</table>
+		<div style="position: relative;">
+			<div id="add-$name-button" style="width: 280px; position: absolute; position: absolute; left: 0px; top: 0px;">
+				<br>
+				<center>
+				<input type="button" value="Add Setting" onclick="switchDiv('add-$name-field', 'add-$name-');return true;">
+				</center>
+			</div>
+			<div id="add-$name-field" style="position: absolute; position: absolute; left: 0px; top: 0px; visibility: hidden;">
+				<table style="width: 265px;">
+				<tr><td colspan="2" align="center" style="border-bottom: 1px solid rgb(153, 153, 153);">Add a Setting</td></tr>
+				<tr><td>Setting Name:</td><td>Setting Value:</td></tr>
+				<tr><td><input onChange="saveNotify();" size="16" id="$(section_number).new__setting" name="$(section_number).new__setting" type="text" value=""></td><td><input onChange="saveNotify();" size="16" type="text" id="$(section_number).new__value" name="$(section_number).new__value" value=""></td></tr>
+				</table>
+			</div>
+		</div>
+	</div>
+#end for
+<div id="set-add" style="text-align: center;position: absolute; left: 0px; top: 0px; visibility: hidden;">
+	Add a New Section
+	<hr>
+	<table>
+	<tr>
+	<td> Section Name :</td><td> 
+		<input onChange="saveNotify();" type="text" size="20" name="new_Section" value="" onfocus="switchDiv('help-add', 'help-');return true;">
+	</td></tr></table>
+	The new section name will be added to the pyTivo.conf file when you click <b>Save Changes</b>.
+</div>
+<div id="set-delete" style="text-align: center;position: absolute; left: 0px; top: 0px; visibility: hidden;">
+	Delete a Section
+	<hr>
+	<br>
+	The Section has been marked for deletion. However it will not be actually deleted until you click the <b>Save Changes</b> button.
+</div>
+<input type="hidden" id="Section_Map" name="Section_Map" value="$section_map">
+      </form>
+
+      </div>
+
+      </td>
+
+      <td style="border-left: 1px dotted rgb(153, 153, 153); vertical-align: top;">
+      <div id="sidesections" style="width: 400px; position: relative;"><!-- HELP SECTIONS -->
+      <div id="help-instructions" style="visibility: visible; width: 400px; overflow: scroll; height: 450px; position: absolute; left: 0px; top: 0px;">
+      <p align="center"><strong>Instructions</strong>
+      </p>
+      <b>To Edit a Share:</b><br>
+      Select the share in the left hand menu and click edit.<br><br>
+      
+      <b>To Delete a Share</b><br>
+      Select the share in the left hand menu and click delete.<br><br>
+      
+      <b>To Add a Share/Tivo/Section</b><br>
+      Click the add section button.  Then provide the name of the share or TiVo. You must save your 
+      changes before you can edit settings in the new share.<br><br>
+      
+      <b>To Add a Setting</b><br>
+      Select you share first.  If the setting is a known setting simply add the value to the appropriate setting.
+      If the setting is not listed you can add a "User Defined Setting".  Simple click add setting and provide
+      the name and value of this new setting.<br><br>
+      
+      <b>To Delete a Setting</b><br>
+      Delete the value of the setting so that it is blank.  If this is a known share the name will remain after a save.
+      If the setting is a user defined setting the name will be deleted after the save.<br><br>
+      
+      <b>Save Settings</b><br>
+      Clicking Save Settings will write your changes to the pyTivo.conf file.  These settings will not have an effect on
+      your pyTivo server until it is Soft Reset or restarted.<br><br>
+      
+      <b>Soft Reset</b><br>
+      Soft Reset allows your new settings to take effect without manually restarting the TiVo.  The Soft Reset will cause
+      a re-read of the pyTivo.conf file so your changes must be saved to the file before the reset.  <b>Note:</b> The only
+      setting that will not take effect until a hard restart is the Port setting.  Changing the Port setting requires a full
+      restart.      
+      </div>
+
+	<div id="help-add" style="position: absolute; left: 0px; top: 0px; visibility: hidden;">
+      <p align="center"><strong>Add a New Section</strong> </p>
+
+      <p> Add the name of a new section.<br>
+
+      Remember if you want to add TiVo section remember it must start with _tivo_<br>
+
+      You must save your settings before the new section will be editable.<br>
+	</p>
+
+      </div>
+#for $setting in $help_list
+	<div id="help-$setting" style="visibility: hidden; width: 400px; overflow: scroll; height: 450px; position: absolute; left: 0px; top: 0px;">
+	      <p align="center"><strong>$setting</strong></p>
+	      #for $line in $help_list[$setting]
+	          <strong>$(line.split(':',1)[0]):</strong>$(line.split(':',1)[1])</p>
+	      #end for
+	</div>
+#end for
+<!-- END HELP SECTIONS --> </div>
+
+      </td>
+
+    </tr>
+
+  </tbody>
+</table>
+</center>
+</body>
+</html>

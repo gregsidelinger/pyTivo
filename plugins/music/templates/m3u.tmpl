@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<TiVoContainer>
+    <ItemStart>$start</ItemStart>
+    <ItemCount>#echo len($files) #</ItemCount>
+    <Details>
+        <Title>$escape($name)</Title>
+        <ContentType>x-container/playlist</ContentType>
+        <SourceFormat>x-container/playlist</SourceFormat>
+        <TotalItems>$total</TotalItems>
+    </Details>
+    #for $file in $files
+    #if '://' in $file['path']
+    <Item>
+        <Details>
+            #if not 'Title' in $file
+            <Title>#echo $file['path'].strip() #</Title>
+            #end if
+            #if $file['is_playlist']
+            <ContentType>x-tivo-container/playlist</ContentType>
+            #else
+            <ContentType>audio/mpeg</ContentType>
+            #end if
+            #for $key in ('Title', 'Duration')
+            #if $key in $file and $file[$key]
+            <$key>$file[$key]</$key>
+            #end if
+            #end for
+        </Details>
+        <Links>
+            <Content>
+                #if $file['is_playlist']
+                <ContentType>x-tivo-container/playlist</ContentType>
+                <Url>/TiVoConnect?Command=QueryContainer&amp;Container=$quote($container)/$quote($file['path'].strip())</Url>
+                #else
+                <ContentType>audio/mpeg</ContentType>
+                <AcceptsParams>No</AcceptsParams>
+                <Url>$file['path'].strip()</Url>
+                #end if
+            </Content>
+        </Links>
+    </Item>
+    #elif $file['is_playlist']
+    <Item>
+        <Details>
+            <Title>#echo '.'.join(file['name'].split('.')[:-1]) #</Title>
+            <ContentType>x-tivo-container/playlist</ContentType>
+        </Details>
+        <Links>
+            <Content>
+                <ContentType>x-tivo-container/playlist</ContentType>
+                <Url>/TiVoConnect?Command=QueryContainer&amp;Container=$quote($container)$quote($file.part_path)</Url>
+            </Content>
+        </Links>
+    </Item>
+    #else
+    <Item>
+        <Details>
+            #if not 'Title' in $file
+            <Title>#echo '.'.join(file['name'].split('.')[:-1]) #</Title>
+            #end if
+            <ContentType>audio/mpeg</ContentType>
+            #for $key in ('Title', 'Duration', 'ArtistName', 'SongTitle', 'AlbumTitle', 'AlbumYear', 'MusicGenre')
+            #if $key in $file and $file[$key]
+            <$key>$file[$key]</$key>
+            #end if
+            #end for
+        </Details>
+        <Links>
+            <Content>
+                <ContentType>audio/mpeg</ContentType>
+                <AcceptsParams>$file.params</AcceptsParams>
+                <Url>/$quote($container)$quote($file.part_path)</Url>
+            </Content>
+        </Links>
+    </Item>
+    #end if
+    #end for
+</TiVoContainer>

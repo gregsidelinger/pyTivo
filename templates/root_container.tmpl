@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<TiVoContainer>
+    <Details>
+        <Title>$hostname</Title>
+        <ContentType>x-container/tivo-server</ContentType>
+        <SourceFormat>x-container/folder</SourceFormat>
+        <TotalItems>#echo len($containers) #</TotalItems>
+    </Details>
+
+    #for $name, $details in $containers.items()
+    <Item>
+        <Details>
+            <Title>$escape($name)</Title>
+            <ContentType>$escape($details.content_type)</ContentType>
+            <SourceFormat>x-container/folder</SourceFormat>
+        </Details>
+        <Links>
+            <Content>
+                <Url>/TiVoConnect?Command=QueryContainer&amp;Container=$quote($name)</Url>
+                <ContentType>$escape($details.content_type)</ContentType>
+            </Content>
+        </Links>
+    </Item>
+    #end for
+
+    <ItemStart>0</ItemStart>
+    <ItemCount>#echo len($containers) #</ItemCount>
+</TiVoContainer>
